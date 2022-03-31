@@ -115,6 +115,10 @@ impl Backend for LocalBackend {
         None
     }
 
+    fn hg_repo(&self) -> Option<hg::repo::Repo> {
+        None
+    }
+
     fn read_file(&self, _path: &RepoPath, id: &FileId) -> BackendResult<Box<dyn Read>> {
         let path = self.file_path(id);
         let file = File::open(path).map_err(not_found_to_backend_error)?;

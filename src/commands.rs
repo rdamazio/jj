@@ -1024,6 +1024,9 @@ struct InitArgs {
     /// Path to a git repo the jj repo will be backed by
     #[clap(long)]
     git_repo: Option<String>,
+    /// Path to an hg repo the jj repo will be backed by
+    #[clap(long)]
+    hg_repo: Option<String>,
 }
 
 /// Update the working copy to another revision
@@ -1888,6 +1891,22 @@ fn cmd_init(ui: &mut Ui, command: &CommandHelper, args: &InitArgs) -> Result<(),
                 workspace_command.finish_transaction(ui, tx)?;
             }
         }
+    } else if let Some(hg_store_str) = &args.hg_repo {
+        let mut hg_store_path = ui.cwd().join(hg_store_str);
+        // Unlike with Git, the repo path is the parent of the .hg/ directory.
+        if hg_store_path.ends_with(".hg") {
+            hg_store_path = hg_store_path.parent().unwrap().to_path_buf();
+        }
+        hg_store_path = hg_store_path.canonicalize().unwrap();
+        // If the git repo is inside the workspace, use a relative path to it so the
+        // whole workspace can be moved without breaking.
+        if let Ok(relative_path) = hg_store_path.strip_prefix(&wc_path) {
+            hg_store_path = PathBuf::from("..")
+                .join("..")
+                .join("..")
+                .join(relative_path);
+        }
+        Workspace::init_external_hg(ui.settings(), wc_path.clone(), hg_store_path)?;
     } else if args.git {
         Workspace::init_internal_git(ui.settings(), wc_path.clone())?;
     } else {
@@ -2798,7 +2817,6 @@ fn log_template(settings: &UserSettings) -> String {
             " " checkouts
             if(is_git_head, label("git_head", " HEAD@git"))
             if(divergent, label("divergent", " divergent"))
-            if(conflict, label("conflict", " conflict"))
             "\n"
             description.first_line()
             "\n"

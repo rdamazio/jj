@@ -153,6 +153,18 @@ impl ReadonlyRepo {
         ReadonlyRepo::init(settings, repo_path, store)
     }
 
+    /// Initializes a repo with an existing Mercurial backend at the specified path
+    pub fn init_external_hg(
+        settings: &UserSettings,
+        repo_path: PathBuf,
+        hg_repo_path: PathBuf,
+    ) -> Arc<ReadonlyRepo> {
+        let repo_path = repo_path.canonicalize().unwrap();
+        ReadonlyRepo::init_repo_dir(&repo_path);
+        let store = Store::init_external_hg(repo_path.join("store"), hg_repo_path);
+        ReadonlyRepo::init(settings, repo_path, store)
+    }
+
     fn init_repo_dir(repo_path: &Path) {
         fs::create_dir(repo_path.join("store")).unwrap();
         fs::create_dir(repo_path.join("op_store")).unwrap();
@@ -587,7 +599,7 @@ impl MutableRepo {
                 self.record_abandoned_commit(current_checkout_id);
             }
         }
-        let open_commit = if !commit.is_open() {
+        let open_commit = if !commit.is_open() && false {
             // If the commit is closed, create a new open commit on top
             CommitBuilder::for_open_commit(
                 settings,

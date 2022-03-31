@@ -24,6 +24,7 @@ use crate::backend::{
 };
 use crate::commit::Commit;
 use crate::git_backend::GitBackend;
+use crate::hg_backend::HgBackend;
 use crate::local_backend::LocalBackend;
 use crate::repo_path::RepoPath;
 use crate::tree::Tree;
@@ -65,12 +66,24 @@ impl Store {
         )))
     }
 
+    pub fn init_external_hg(store_path: PathBuf, hg_repo_path: PathBuf) -> Arc<Self> {
+        Store::new(Box::new(HgBackend::init_external(
+            store_path,
+            hg_repo_path,
+        )))
+    }
+
     pub fn load_store(store_path: PathBuf) -> Arc<Store> {
         let git_target_path = store_path.join("git_target");
         let backend: Box<dyn Backend> = if git_target_path.is_file() {
             Box::new(GitBackend::load(store_path))
         } else {
-            Box::new(LocalBackend::load(store_path))
+            let hg_target_path = store_path.join("hg_target");
+            if hg_target_path.is_file() {
+                Box::new(HgBackend::load(store_path))
+            } else {
+                Box::new(LocalBackend::load(store_path))
+            }
         };
         Store::new(backend)
     }
@@ -81,6 +94,10 @@ impl Store {
 
     pub fn git_repo(&self) -> Option<git2::Repository> {
         self.backend.git_repo()
+    }
+
+    pub fn hg_repo(&self) -> Option<hg::repo::Repo> {
+        self.backend.hg_repo()
     }
 
     pub fn empty_tree_id(&self) -> &TreeId {

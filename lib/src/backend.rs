@@ -40,16 +40,16 @@ impl CommitId {
         Self(bytes.to_vec())
     }
 
+    pub fn from_hex(hex: &str) -> Self {
+        Self(hex::decode(hex).unwrap())
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
         self.0.clone()
-    }
-
-    pub fn from_hex(hex: &str) -> Self {
-        Self(hex::decode(hex).unwrap())
     }
 
     pub fn hex(&self) -> String {
@@ -75,16 +75,16 @@ impl ChangeId {
         Self(bytes.to_vec())
     }
 
+    pub fn from_hex(hex: &str) -> Self {
+        Self(hex::decode(hex).unwrap())
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
         self.0.clone()
-    }
-
-    pub fn from_hex(hex: &str) -> Self {
-        Self(hex::decode(hex).unwrap())
     }
 
     pub fn hex(&self) -> String {
@@ -108,6 +108,10 @@ impl TreeId {
 
     pub fn from_bytes(bytes: &[u8]) -> Self {
         Self(bytes.to_vec())
+    }
+
+    pub fn from_hex(hex: &str) -> Self {
+        Self(hex::decode(hex).unwrap())
     }
 
     pub fn as_bytes(&self) -> &[u8] {
@@ -141,6 +145,10 @@ impl FileId {
         Self(bytes.to_vec())
     }
 
+    pub fn from_hex(hex: &str) -> Self {
+        Self(hex::decode(hex).unwrap())
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
@@ -172,6 +180,10 @@ impl SymlinkId {
         Self(bytes.to_vec())
     }
 
+    pub fn from_hex(hex: &str) -> Self {
+        Self(hex::decode(hex).unwrap())
+    }
+
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
@@ -201,6 +213,10 @@ impl ConflictId {
 
     pub fn from_bytes(bytes: &[u8]) -> Self {
         Self(bytes.to_vec())
+    }
+
+    pub fn from_hex(hex: &str) -> Self {
+        Self(hex::decode(hex).unwrap())
     }
 
     pub fn as_bytes(&self) -> &[u8] {
@@ -374,6 +390,8 @@ pub trait Backend: Send + Sync + Debug {
     fn hash_length(&self) -> usize;
 
     fn git_repo(&self) -> Option<git2::Repository>;
+
+    fn hg_repo(&self) -> Option<hg::repo::Repo>;
 
     fn read_file(&self, path: &RepoPath, id: &FileId) -> BackendResult<Box<dyn Read>>;
 

@@ -18,6 +18,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use thiserror::Error;
+use crate::backend::CommitId;
 
 use crate::op_store::WorkspaceId;
 use crate::repo::{ReadonlyRepo, RepoLoader};
@@ -156,6 +157,38 @@ impl Workspace {
             &jj_dir,
             WorkspaceId::default(),
         );
+        let repo_loader = repo.loader();
+        let workspace = Workspace::new(workspace_root, working_copy, repo_loader);
+        Ok((workspace, repo))
+    }
+
+    pub fn init_external_hg(
+        user_settings: &UserSettings,
+        workspace_root: PathBuf,
+        hg_repo_path: PathBuf,
+    ) -> Result<(Self, Arc<ReadonlyRepo>), WorkspaceInitError> {
+        let jj_dir = create_jj_dir(&workspace_root)?;
+        let repo_dir = jj_dir.join("repo");
+        std::fs::create_dir(&repo_dir).unwrap();
+        let repo = ReadonlyRepo::init_external_hg(user_settings, repo_dir, hg_repo_path);
+        let (working_copy, repo) = init_working_copy(
+            user_settings,
+            &repo,
+            &workspace_root,
+            &jj_dir,
+            WorkspaceId::default(),
+        );
+        let hg_repo = repo.store().hg_repo().unwrap();
+        let changelog = hg_repo.changelog().unwrap();
+        let mut rev = 0;
+        let mut tx = repo.start_transaction("test");
+        while let Some(node) = changelog.node_from_rev(rev) {
+            let commit_id = CommitId::from_bytes(node.as_bytes());
+            let commit = repo.store().get_commit(&commit_id).unwrap();
+            tx.mut_repo().add_head(&commit);
+            rev += 1;
+        }
+        let repo = tx.commit();
         let repo_loader = repo.loader();
         let workspace = Workspace::new(workspace_root, working_copy, repo_loader);
         Ok((workspace, repo))

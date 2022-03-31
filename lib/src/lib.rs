@@ -33,6 +33,7 @@ pub mod files;
 pub mod git;
 pub mod git_backend;
 pub mod gitignore;
+pub mod hg_backend;
 pub mod index;
 pub mod index_store;
 pub mod local_backend;

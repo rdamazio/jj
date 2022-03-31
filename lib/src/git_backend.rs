@@ -171,6 +171,10 @@ impl Backend for GitBackend {
         Some(git2::Repository::open(&path).unwrap())
     }
 
+    fn hg_repo(&self) -> Option<hg::repo::Repo> {
+        None
+    }
+
     fn read_file(&self, _path: &RepoPath, id: &FileId) -> BackendResult<Box<dyn Read>> {
         if id.as_bytes().len() != self.hash_length() {
             return Err(BackendError::NotFound);
